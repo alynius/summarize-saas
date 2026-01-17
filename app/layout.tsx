@@ -28,6 +28,11 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        <head>
+          <title>DigestAI - AI-Powered Summarization</title>
+          <meta name="description" content="Summarize any URL or text in seconds with AI. Choose your length, pick your model, get instant insights." />
+          <link rel="icon" href="/favicon.ico" />
+        </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >

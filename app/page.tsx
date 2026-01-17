@@ -17,7 +17,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="h-6 w-6 text-amber-400" />
-            <span className="text-xl font-semibold">SummarizeAI</span>
+            <span className="text-xl font-semibold">DigestAI</span>
           </div>
           <div className="flex items-center gap-4">
             <Link
@@ -243,7 +243,7 @@ export default function Home() {
                 </li>
               </ul>
               <a
-                href="mailto:contact@summarizeai.com"
+                href="mailto:contact@digestai.ai"
                 className="mt-8 block w-full rounded-lg bg-zinc-800 py-2.5 text-center text-sm font-medium hover:bg-zinc-700 transition-colors"
               >
                 Contact Us
@@ -259,10 +259,10 @@ export default function Home() {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-amber-400" />
-              <span className="font-semibold">SummarizeAI</span>
+              <span className="font-semibold">DigestAI</span>
             </div>
             <p className="text-sm text-zinc-500">
-              &copy; {new Date().getFullYear()} SummarizeAI. All rights reserved.
+              &copy; {new Date().getFullYear()} DigestAI. All rights reserved.
             </p>
           </div>
         </div>
