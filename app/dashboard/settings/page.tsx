@@ -385,10 +385,10 @@ export default function SettingsPage() {
         <p className="text-xs text-muted-foreground text-center mt-8">
           Need help? Contact{" "}
           <a
-            href="mailto:support@summarize.app"
+            href="mailto:support@digestai.ai"
             className="underline underline-offset-2 hover:text-foreground transition-colors"
           >
-            support@summarize.app
+            support@digestai.ai
           </a>
         </p>
       </div>
