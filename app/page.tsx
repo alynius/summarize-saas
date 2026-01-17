@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import {
   Link as LinkIcon,
   FileText,
@@ -9,7 +11,14 @@ import {
   Zap,
 } from "lucide-react";
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+
+  // Redirect authenticated users to dashboard
+  if (userId) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="min-h-screen bg-zinc-900 text-zinc-100">
       {/* Navigation */}
