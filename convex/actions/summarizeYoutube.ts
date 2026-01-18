@@ -112,8 +112,102 @@ async function fetchYouTubeMetadata(videoId: string): Promise<YouTubeMetadata> {
   };
 }
 
+interface CaptionTrack {
+  baseUrl: string;
+  languageCode: string;
+  kind?: string;
+}
+
+/**
+ * Extract caption tracks from YouTube page HTML
+ */
+function extractCaptionTracks(html: string): CaptionTrack[] {
+  try {
+    const match = html.match(/"captionTracks":\s*(\[[\s\S]*?\])/);
+    if (!match) {
+      return [];
+    }
+    const jsonStr = match[1].replace(/\\u0026/g, "&");
+    const tracks = JSON.parse(jsonStr) as CaptionTrack[];
+    return tracks;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch transcript directly from YouTube's timedtext API
+ */
+async function fetchTranscriptDirect(videoId: string): Promise<string | null> {
+  try {
+    const videoUrl = "https://www.youtube.com/watch?v=" + videoId;
+    const response = await fetch(videoUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const html = await response.text();
+    const captionTracks = extractCaptionTracks(html);
+    if (captionTracks.length === 0) {
+      return null;
+    }
+
+    // Prefer English captions, then auto-generated, then first available
+    let selectedTrack = captionTracks.find(
+      (t) => t.languageCode === "en" && t.kind !== "asr"
+    );
+    if (!selectedTrack) {
+      selectedTrack = captionTracks.find(
+        (t) => t.languageCode === "en" && t.kind === "asr"
+      );
+    }
+    if (!selectedTrack) {
+      selectedTrack = captionTracks.find((t) => t.kind !== "asr");
+    }
+    if (!selectedTrack) {
+      selectedTrack = captionTracks[0];
+    }
+
+    const transcriptUrl = selectedTrack.baseUrl + "&fmt=json3";
+    const transcriptResponse = await fetch(transcriptUrl);
+
+    if (!transcriptResponse.ok) {
+      return null;
+    }
+
+    const transcriptData = await transcriptResponse.json();
+
+    if (!transcriptData.events || !Array.isArray(transcriptData.events)) {
+      return null;
+    }
+
+    const textParts: string[] = [];
+    for (const event of transcriptData.events) {
+      if (event.segs) {
+        for (const seg of event.segs) {
+          if (seg.utf8) {
+            textParts.push(seg.utf8);
+          }
+        }
+      }
+    }
+
+    const transcript = textParts.join(" ").replace(/\s+/g, " ").trim();
+    return transcript.length > 0 ? transcript : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Fetch the transcript for a YouTube video
+ * Uses direct API fetch first, falls back to youtube-transcript package
  */
 async function fetchYouTubeTranscript(videoId: string): Promise<string> {
   if (!videoId || typeof videoId !== "string") {
@@ -124,6 +218,13 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
     throw new Error("Invalid video ID format");
   }
 
+  // Try direct fetch first
+  const directTranscript = await fetchTranscriptDirect(videoId);
+  if (directTranscript && directTranscript.length > 10) {
+    return directTranscript;
+  }
+
+  // Fall back to youtube-transcript package
   try {
     const transcriptSegments = await YoutubeTranscript.fetchTranscript(videoId);
 
@@ -131,7 +232,6 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
       throw new Error("No transcript available for this video");
     }
 
-    // Join all transcript segments into a single string
     const fullTranscript = transcriptSegments
       .map((segment) => segment.text)
       .join(" ")
@@ -502,3 +602,4 @@ export const summarizeYoutube = action({
     };
   },
 });
+
