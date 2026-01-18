@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UrlInput } from "@/components/summarize/url-input";
 import { TextInput } from "@/components/summarize/text-input";
@@ -17,10 +16,22 @@ import { LengthSelector } from "@/components/summarize/length-selector";
 import { ModelSelector } from "@/components/summarize/model-selector";
 import { SummaryCard } from "@/components/summarize/summary-card";
 import { SummarizingState } from "@/components/summarize/summarizing-state";
-import { Link, FileText, Sparkles, AlertCircle, Loader2, FileUp, Layers, Twitter, Github, Image } from "lucide-react";
+import {
+  Link,
+  FileText,
+  AlertCircle,
+  Loader2,
+  FileUp,
+  Layers,
+  Twitter,
+  Github,
+  Image,
+  Zap,
+} from "lucide-react";
 import type { SummaryLength } from "@/lib/summarize/types";
 import { useCurrentUser } from "@/hooks/use-user";
 import { useSummarize } from "@/hooks/use-summarize";
+import { cn } from "@/lib/utils";
 
 function RedditIcon({ className }: { className?: string }) {
   return (
@@ -29,6 +40,81 @@ function RedditIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+type SourceType =
+  | "url"
+  | "text"
+  | "pdf"
+  | "batch"
+  | "twitter"
+  | "reddit"
+  | "github"
+  | "image";
+
+const sourceTypes: {
+  id: SourceType;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  gradient: string;
+}[] = [
+  {
+    id: "url",
+    label: "URL",
+    description: "Summarize any webpage",
+    icon: Link,
+    gradient: "from-blue-500 to-blue-600",
+  },
+  {
+    id: "text",
+    label: "Text",
+    description: "Paste content directly",
+    icon: FileText,
+    gradient: "from-emerald-500 to-emerald-600",
+  },
+  {
+    id: "pdf",
+    label: "PDF",
+    description: "Upload documents",
+    icon: FileUp,
+    gradient: "from-red-500 to-red-600",
+  },
+  {
+    id: "batch",
+    label: "Batch URLs",
+    description: "Multiple URLs at once",
+    icon: Layers,
+    gradient: "from-violet-500 to-violet-600",
+  },
+  {
+    id: "twitter",
+    label: "Twitter",
+    description: "Summarize threads",
+    icon: Twitter,
+    gradient: "from-sky-400 to-sky-500",
+  },
+  {
+    id: "reddit",
+    label: "Reddit",
+    description: "Posts & comments",
+    icon: RedditIcon,
+    gradient: "from-orange-500 to-orange-600",
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    description: "PRs and Issues",
+    icon: Github,
+    gradient: "from-zinc-400 to-zinc-500",
+  },
+  {
+    id: "image",
+    label: "Image",
+    description: "OCR & summarize",
+    icon: Image,
+    gradient: "from-pink-500 to-pink-600",
+  },
+];
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
@@ -48,6 +134,7 @@ export default function DashboardPage() {
     reset,
   } = useSummarize();
 
+  const [selectedSource, setSelectedSource] = useState<SourceType>("url");
   const [length, setLength] = useState<SummaryLength>("medium");
   const [model, setModel] = useState("gpt-4o");
 
@@ -85,12 +172,10 @@ export default function DashboardPage() {
     if (!user?._id) return;
     reset();
     try {
-      // Convert file to base64 using browser-native FileReader
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          // Remove data URL prefix (e.g., "data:application/pdf;base64,")
           resolve(result.split(",")[1]);
         };
         reader.onerror = reject;
@@ -142,7 +227,9 @@ export default function DashboardPage() {
     }
   };
 
-  const handleImageSubmit = async (images: Array<{ base64: string; mimeType: string; fileName: string }>) => {
+  const handleImageSubmit = async (
+    images: Array<{ base64: string; mimeType: string; fileName: string }>
+  ) => {
     if (!user?._id) return;
     reset();
     try {
@@ -152,7 +239,47 @@ export default function DashboardPage() {
     }
   };
 
-  // Show loading state while user is being fetched
+  const currentSource = sourceTypes.find((s) => s.id === selectedSource);
+
+  const renderInput = () => {
+    switch (selectedSource) {
+      case "url":
+        return (
+          <UrlInput
+            onSubmit={handleUrlSubmit}
+            onYouTubeSubmit={handleYouTubeSubmit}
+            isLoading={isLoading}
+          />
+        );
+      case "text":
+        return <TextInput onSubmit={handleTextSubmit} isLoading={isLoading} />;
+      case "pdf":
+        return <PdfInput onSubmit={handlePdfSubmit} isLoading={isLoading} />;
+      case "batch":
+        return (
+          <BatchUrlInput onSubmit={handleBatchSubmit} isLoading={isLoading} />
+        );
+      case "twitter":
+        return (
+          <TwitterInput onSubmit={handleTwitterSubmit} isLoading={isLoading} />
+        );
+      case "reddit":
+        return (
+          <RedditInput onSubmit={handleRedditSubmit} isLoading={isLoading} />
+        );
+      case "github":
+        return (
+          <GithubInput onSubmit={handleGithubSubmit} isLoading={isLoading} />
+        );
+      case "image":
+        return (
+          <ImageInput onSubmit={handleImageSubmit} isLoading={isLoading} />
+        );
+      default:
+        return null;
+    }
+  };
+
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -162,7 +289,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-8">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
@@ -171,105 +298,126 @@ export default function DashboardPage() {
         </Alert>
       )}
 
-      {/* Input Section */}
+      {/* Main Input Section with Sidebar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="glass-card border-0 shadow-xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10">
-                <Sparkles className="h-4 w-4 text-amber-400" />
-              </div>
-              Create Summary
-            </CardTitle>
-          </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          {/* Options Row */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <LengthSelector
-              value={length}
-              onChange={setLength}
-              disabled={isLoading}
-            />
-            <ModelSelector
-              value={model}
-              onChange={setModel}
-              disabled={isLoading}
-            />
+        <div className="flex gap-4 min-h-[420px]">
+          {/* Source Sidebar */}
+          <div className="w-48 flex-shrink-0 bg-zinc-900/50 backdrop-blur-xl rounded-2xl border border-zinc-800/50 p-3">
+            <p className="text-xs text-zinc-500 px-3 py-2 font-medium uppercase tracking-wide">
+              Sources
+            </p>
+            <nav className="space-y-1">
+              {sourceTypes.map((source) => {
+                const Icon = source.icon;
+                const isSelected = selectedSource === source.id;
+
+                return (
+                  <button
+                    key={source.id}
+                    onClick={() => !isLoading && setSelectedSource(source.id)}
+                    disabled={isLoading}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all relative",
+                      isSelected
+                        ? "bg-gradient-to-r from-amber-500/15 to-amber-400/5 text-amber-400"
+                        : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50",
+                      isLoading && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="absolute left-0 top-1 bottom-1 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                      />
+                    )}
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 flex-shrink-0",
+                        isSelected && "text-amber-400"
+                      )}
+                    />
+                    <span className="text-sm font-medium truncate">
+                      {source.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
-          {/* Input Tabs */}
-          <Tabs defaultValue="url" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-2">
-              <TabsTrigger value="url" className="gap-2" disabled={isLoading}>
-                <Link className="h-4 w-4" />
-                URL
-              </TabsTrigger>
-              <TabsTrigger value="text" className="gap-2" disabled={isLoading}>
-                <FileText className="h-4 w-4" />
-                Text
-              </TabsTrigger>
-              <TabsTrigger value="pdf" className="gap-2" disabled={isLoading}>
-                <FileUp className="h-4 w-4" />
-                PDF
-              </TabsTrigger>
-              <TabsTrigger value="batch" className="gap-2" disabled={isLoading}>
-                <Layers className="h-4 w-4" />
-                Batch
-              </TabsTrigger>
-            </TabsList>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="twitter" className="gap-2" disabled={isLoading}>
-                <Twitter className="h-4 w-4" />
-                Twitter
-              </TabsTrigger>
-              <TabsTrigger value="reddit" className="gap-2" disabled={isLoading}>
-                <RedditIcon className="h-4 w-4" />
-                Reddit
-              </TabsTrigger>
-              <TabsTrigger value="github" className="gap-2" disabled={isLoading}>
-                <Github className="h-4 w-4" />
-                GitHub
-              </TabsTrigger>
-              <TabsTrigger value="image" className="gap-2" disabled={isLoading}>
-                <Image className="h-4 w-4" />
-                Image
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="url" className="mt-4">
-              <UrlInput
-                onSubmit={handleUrlSubmit}
-                onYouTubeSubmit={handleYouTubeSubmit}
-                isLoading={isLoading}
-              />
-            </TabsContent>
-            <TabsContent value="text" className="mt-4">
-              <TextInput onSubmit={handleTextSubmit} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="pdf" className="mt-4">
-              <PdfInput onSubmit={handlePdfSubmit} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="batch" className="mt-4">
-              <BatchUrlInput onSubmit={handleBatchSubmit} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="twitter" className="mt-4">
-              <TwitterInput onSubmit={handleTwitterSubmit} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="reddit" className="mt-4">
-              <RedditInput onSubmit={handleRedditSubmit} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="github" className="mt-4">
-              <GithubInput onSubmit={handleGithubSubmit} isLoading={isLoading} />
-            </TabsContent>
-            <TabsContent value="image" className="mt-4">
-              <ImageInput onSubmit={handleImageSubmit} isLoading={isLoading} />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+          {/* Main Content Area */}
+          <div className="flex-1 glass-card rounded-2xl border border-zinc-800/50 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-zinc-800/50 bg-zinc-900/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {currentSource && (
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center",
+                        currentSource.gradient
+                      )}
+                    >
+                      <currentSource.icon className="h-5 w-5 text-white" />
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-lg font-semibold text-white">
+                      {currentSource?.label}
+                    </h2>
+                    <p className="text-sm text-zinc-500">
+                      {currentSource?.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-400" />
+                  <span className="text-sm text-zinc-400">AI-Powered</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Input Content */}
+            <div className="p-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedSource}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {renderInput()}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Options */}
+              <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-zinc-800/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-zinc-500">Length:</span>
+                  <LengthSelector
+                    value={length}
+                    onChange={setLength}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-zinc-500">Model:</span>
+                  <ModelSelector
+                    value={model}
+                    onChange={setModel}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Result Section */}
@@ -291,17 +439,19 @@ export default function DashboardPage() {
           transition={{ delay: 0.2 }}
         >
           <Card className="border-dashed border-zinc-800 bg-zinc-900/30">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="relative mb-6">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="relative mb-5">
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-violet-500/10 rounded-full blur-2xl" />
-                <div className="relative bg-zinc-800/50 rounded-full p-5">
-                  <FileText className="h-10 w-10 text-zinc-500" />
+                <div className="relative bg-zinc-800/50 rounded-full p-4">
+                  <FileText className="h-8 w-8 text-zinc-500" />
                 </div>
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-zinc-300">No summary yet</h3>
+              <h3 className="mb-2 text-base font-semibold text-zinc-300">
+                No summary yet
+              </h3>
               <p className="max-w-sm text-sm text-zinc-500 leading-relaxed">
-                Enter a URL or paste text above to generate a summary using AI.
-                Your summary will appear here.
+                Select a source type and enter your content to generate an
+                AI-powered summary.
               </p>
             </CardContent>
           </Card>
