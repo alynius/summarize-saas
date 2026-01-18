@@ -9,7 +9,10 @@ import {
   ArrowRight,
   Check,
   Zap,
+  Sparkles,
 } from "lucide-react";
+import { HeroSection } from "@/components/landing/hero-section";
+import { FeaturesSection } from "@/components/landing/features-section";
 
 export default async function Home() {
   const { userId } = await auth();
@@ -22,11 +25,15 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-zinc-900 text-zinc-100">
       {/* Navigation */}
-      <nav className="border-b border-zinc-800">
+      <nav className="border-b border-zinc-800/50 bg-zinc-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Zap className="h-6 w-6 text-amber-400" />
-            <span className="text-xl font-semibold">DigestAI</span>
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10">
+              <Zap className="h-5 w-5 text-amber-400" />
+            </div>
+            <span className="text-xl font-semibold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
+              DigestAI
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <Link
@@ -37,7 +44,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/sign-up"
-              className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-amber-400 transition-colors"
+              className="rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-sm font-medium text-zinc-900 hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30"
             >
               Get Started
             </Link>
@@ -46,82 +53,10 @@ export default async function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="mx-auto max-w-6xl px-6 py-24 text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          Summarize Any URL or Text
-          <br />
-          <span className="text-amber-400">in Seconds</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-400">
-          AI-powered summaries at your fingertips. Choose your length, pick your
-          model, get instant insights.
-        </p>
-        <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <Link
-            href="/sign-up"
-            className="flex items-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-base font-medium text-zinc-900 hover:bg-amber-400 transition-colors"
-          >
-            Get Started Free
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/sign-in"
-            className="flex items-center gap-2 rounded-lg border border-zinc-700 px-6 py-3 text-base font-medium text-zinc-100 hover:bg-zinc-800 transition-colors"
-          >
-            Sign In
-          </Link>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* Features Section */}
-      <section className="border-t border-zinc-800 bg-zinc-950/50">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="text-center text-3xl font-bold">
-            Everything You Need to Summarize
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-zinc-400">
-            Powerful features to help you extract insights from any content
-          </p>
-          <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10">
-                <LinkIcon className="h-6 w-6 text-amber-400" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">URL Summarization</h3>
-              <p className="mt-2 text-sm text-zinc-400">
-                Paste any article URL and get a concise summary instantly
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10">
-                <FileText className="h-6 w-6 text-amber-400" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">Text Summarization</h3>
-              <p className="mt-2 text-sm text-zinc-400">
-                Paste long text directly and let AI extract the key points
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10">
-                <Scaling className="h-6 w-6 text-amber-400" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">Multiple Lengths</h3>
-              <p className="mt-2 text-sm text-zinc-400">
-                Choose Short, Medium, Long, or XL summaries based on your needs
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10">
-                <Cpu className="h-6 w-6 text-amber-400" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">Model Choice</h3>
-              <p className="mt-2 text-sm text-zinc-400">
-                Pick from OpenAI, Anthropic, or Google AI models
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <FeaturesSection />
 
       {/* How It Works Section */}
       <section className="border-t border-zinc-800">

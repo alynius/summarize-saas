@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,6 +10,7 @@ import { TextInput } from "@/components/summarize/text-input";
 import { LengthSelector } from "@/components/summarize/length-selector";
 import { ModelSelector } from "@/components/summarize/model-selector";
 import { SummaryCard } from "@/components/summarize/summary-card";
+import { SummarizingState } from "@/components/summarize/summarizing-state";
 import { Link, FileText, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import type { SummaryLength } from "@/lib/summarize/types";
 import { useCurrentUser } from "@/hooks/use-user";
@@ -61,13 +63,20 @@ export default function DashboardPage() {
       )}
 
       {/* Input Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            Create Summary
-          </CardTitle>
-        </CardHeader>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Card className="glass-card border-0 shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10">
+                <Sparkles className="h-4 w-4 text-amber-400" />
+              </div>
+              Create Summary
+            </CardTitle>
+          </CardHeader>
         <CardContent className="flex flex-col gap-6">
           {/* Options Row */}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -104,9 +113,12 @@ export default function DashboardPage() {
           </Tabs>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Result Section */}
-      {result ? (
+      {isLoading ? (
+        <SummarizingState />
+      ) : result ? (
         <SummaryCard
           title={result.title}
           summary={result.summary}
@@ -116,18 +128,27 @@ export default function DashboardPage() {
           timestamp={new Date()}
         />
       ) : (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 rounded-full bg-muted p-4">
-              <FileText className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="mb-2 text-lg font-medium">No summary yet</h3>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Enter a URL or paste text above to generate a summary using AI.
-              Your summary will appear here.
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="border-dashed border-zinc-800 bg-zinc-900/30">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-violet-500/10 rounded-full blur-2xl" />
+                <div className="relative bg-zinc-800/50 rounded-full p-5">
+                  <FileText className="h-10 w-10 text-zinc-500" />
+                </div>
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-zinc-300">No summary yet</h3>
+              <p className="max-w-sm text-sm text-zinc-500 leading-relaxed">
+                Enter a URL or paste text above to generate a summary using AI.
+                Your summary will appear here.
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
     </div>
   );
