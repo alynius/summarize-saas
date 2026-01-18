@@ -24,46 +24,36 @@ function countWords(text: string): number {
 
 /**
  * Extract text content from a PDF buffer
- * @param buffer - ArrayBuffer containing the PDF data
+ * Note: This function is for server-side use only (requires Node.js Buffer)
+ * @param buffer - Buffer containing the PDF data
  * @returns Extracted text, page count, metadata, and word count
  */
-export async function extractPdfText(buffer: ArrayBuffer): Promise<PdfExtractResult> {
-  // Dynamic import for pdf-parse (works in both browser and Node.js)
-  const { PDFParse } = await import("pdf-parse");
+export async function extractPdfText(buffer: Buffer): Promise<PdfExtractResult> {
+  // Use require for pdf-parse (v1.x API)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfParse = require("pdf-parse");
 
-  // Convert ArrayBuffer to Uint8Array for pdf-parse
-  const pdfData = new Uint8Array(buffer);
-
-  // Create parser and parse the PDF
-  const parser = new PDFParse({ data: pdfData });
-
-  // Get text and info
-  const [textResult, infoResult] = await Promise.all([
-    parser.getText(),
-    parser.getInfo(),
-  ]);
-
-  // Clean up parser
-  await parser.destroy();
+  // Parse the PDF buffer
+  const pdfData = await pdfParse(buffer);
 
   // Extract text and clean it up
-  const text = textResult.text
+  const text = pdfData.text
     .replace(/\r\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
   // Extract metadata
   const metadata: PdfExtractResult["metadata"] = {};
-  if (infoResult.info?.Title) {
-    metadata.title = infoResult.info.Title;
+  if (pdfData.info?.Title) {
+    metadata.title = String(pdfData.info.Title);
   }
-  if (infoResult.info?.Author) {
-    metadata.author = infoResult.info.Author;
+  if (pdfData.info?.Author) {
+    metadata.author = String(pdfData.info.Author);
   }
 
   return {
     text,
-    pageCount: infoResult.total,
+    pageCount: pdfData.numpages,
     metadata,
     wordCount: countWords(text),
   };

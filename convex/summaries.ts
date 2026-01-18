@@ -5,7 +5,17 @@ export const createSummary = mutation({
   args: {
     userId: v.id("users"),
     url: v.optional(v.string()),
-    inputType: v.union(v.literal("url"), v.literal("text"), v.literal("youtube"), v.literal("pdf")),
+    inputType: v.union(
+      v.literal("url"),
+      v.literal("text"),
+      v.literal("youtube"),
+      v.literal("pdf"),
+      v.literal("batch"),
+      v.literal("twitter"),
+      v.literal("reddit"),
+      v.literal("github"),
+      v.literal("image")
+    ),
     inputTitle: v.optional(v.string()),
     inputContent: v.string(),
     inputWordCount: v.number(),
@@ -25,6 +35,31 @@ export const createSummary = mutation({
     // PDF-specific fields
     pdfFileName: v.optional(v.string()),
     pdfPageCount: v.optional(v.number()),
+    // Batch URLs fields
+    batchUrls: v.optional(v.array(v.string())),
+    batchCount: v.optional(v.number()),
+    // Twitter/X fields
+    twitterThreadId: v.optional(v.string()),
+    twitterAuthor: v.optional(v.string()),
+    twitterAuthorHandle: v.optional(v.string()),
+    twitterTweetCount: v.optional(v.number()),
+    // Reddit fields
+    redditPostId: v.optional(v.string()),
+    redditSubreddit: v.optional(v.string()),
+    redditAuthor: v.optional(v.string()),
+    redditScore: v.optional(v.number()),
+    redditCommentCount: v.optional(v.number()),
+    // GitHub fields
+    githubType: v.optional(v.union(v.literal("pr"), v.literal("issue"))),
+    githubOwner: v.optional(v.string()),
+    githubRepo: v.optional(v.string()),
+    githubNumber: v.optional(v.number()),
+    githubState: v.optional(v.string()),
+    githubFilesChanged: v.optional(v.number()),
+    // Image OCR fields
+    imageFileNames: v.optional(v.array(v.string())),
+    imageCount: v.optional(v.number()),
+    ocrMethod: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const summaryId = await ctx.db.insert("summaries", {
@@ -45,6 +80,26 @@ export const createSummary = mutation({
       youtubeDuration: args.youtubeDuration,
       pdfFileName: args.pdfFileName,
       pdfPageCount: args.pdfPageCount,
+      batchUrls: args.batchUrls,
+      batchCount: args.batchCount,
+      twitterThreadId: args.twitterThreadId,
+      twitterAuthor: args.twitterAuthor,
+      twitterAuthorHandle: args.twitterAuthorHandle,
+      twitterTweetCount: args.twitterTweetCount,
+      redditPostId: args.redditPostId,
+      redditSubreddit: args.redditSubreddit,
+      redditAuthor: args.redditAuthor,
+      redditScore: args.redditScore,
+      redditCommentCount: args.redditCommentCount,
+      githubType: args.githubType,
+      githubOwner: args.githubOwner,
+      githubRepo: args.githubRepo,
+      githubNumber: args.githubNumber,
+      githubState: args.githubState,
+      githubFilesChanged: args.githubFilesChanged,
+      imageFileNames: args.imageFileNames,
+      imageCount: args.imageCount,
+      ocrMethod: args.ocrMethod,
     });
 
     return summaryId;

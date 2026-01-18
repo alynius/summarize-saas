@@ -274,37 +274,27 @@ export const summarizePdf = action({
     let pdfAuthor: string | undefined;
 
     try {
-      const { PDFParse } = await import("pdf-parse");
+      // Dynamic import pdf-parse (v1.x API)
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require("pdf-parse");
 
-      // Convert Buffer to Uint8Array for pdf-parse
-      const pdfData = new Uint8Array(pdfBuffer);
+      // Parse the PDF buffer (pdf-parse 1.x accepts Node.js Buffer directly)
+      const pdfData = await pdfParse(pdfBuffer);
 
-      // Create parser and parse the PDF
-      const parser = new PDFParse({ data: pdfData });
-
-      // Get text and info
-      const [textResult, infoResult] = await Promise.all([
-        parser.getText(),
-        parser.getInfo(),
-      ]);
-
-      // Clean up parser
-      await parser.destroy();
-
-      // Extract and clean up text
-      pdfText = textResult.text
+      // Extract text and clean up
+      pdfText = pdfData.text
         .replace(/\r\n/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
 
-      pageCount = infoResult.total;
+      pageCount = pdfData.numpages;
 
       // Extract metadata
-      if (infoResult.info?.Title) {
-        pdfTitle = infoResult.info.Title;
+      if (pdfData.info?.Title) {
+        pdfTitle = String(pdfData.info.Title);
       }
-      if (infoResult.info?.Author) {
-        pdfAuthor = infoResult.info.Author;
+      if (pdfData.info?.Author) {
+        pdfAuthor = String(pdfData.info.Author);
       }
     } catch (error) {
       console.error("PDF parsing error:", error);

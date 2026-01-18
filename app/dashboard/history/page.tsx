@@ -17,6 +17,10 @@ import {
   Loader2,
   Youtube,
   User,
+  Layers,
+  Twitter,
+  Github,
+  Image,
 } from "lucide-react";
 import { useCurrentUser, useSummaries } from "@/hooks";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -63,7 +67,7 @@ type SummaryData = {
   _id: Id<"summaries">;
   userId: Id<"users">;
   url?: string;
-  inputType: "url" | "text" | "youtube" | "pdf";
+  inputType: "url" | "text" | "youtube" | "pdf" | "batch" | "twitter" | "reddit" | "github" | "image";
   inputTitle?: string;
   inputContent: string;
   inputWordCount: number;
@@ -80,6 +84,31 @@ type SummaryData = {
   // PDF-specific fields
   pdfFileName?: string;
   pdfPageCount?: number;
+  // Batch URLs fields
+  batchUrls?: string[];
+  batchCount?: number;
+  // Twitter fields
+  twitterThreadId?: string;
+  twitterAuthor?: string;
+  twitterAuthorHandle?: string;
+  twitterTweetCount?: number;
+  // Reddit fields
+  redditPostId?: string;
+  redditSubreddit?: string;
+  redditAuthor?: string;
+  redditScore?: number;
+  redditCommentCount?: number;
+  // GitHub fields
+  githubType?: "pr" | "issue";
+  githubOwner?: string;
+  githubRepo?: string;
+  githubNumber?: number;
+  githubState?: string;
+  githubFilesChanged?: number;
+  // Image fields
+  imageFileNames?: string[];
+  imageCount?: number;
+  ocrMethod?: string;
 };
 
 interface SummaryItemProps {
@@ -87,13 +116,33 @@ interface SummaryItemProps {
   onDelete: (id: Id<"summaries">) => void;
 }
 
+function RedditIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
+    </svg>
+  );
+}
+
 function SummaryItem({ summary, onDelete }: SummaryItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const displayTitle = summary.inputTitle ||
-    (summary.inputType === "youtube" ? "YouTube Video" :
-     summary.inputType === "pdf" ? (summary.pdfFileName || "PDF Document") :
-     summary.inputType === "url" ? "URL Summary" : "Pasted text document");
+  const getDisplayTitle = () => {
+    if (summary.inputTitle) return summary.inputTitle;
+    switch (summary.inputType) {
+      case "youtube": return "YouTube Video";
+      case "pdf": return summary.pdfFileName || "PDF Document";
+      case "url": return "URL Summary";
+      case "batch": return `Batch Summary (${summary.batchCount || 0} URLs)`;
+      case "twitter": return `Thread by @${summary.twitterAuthorHandle || "user"}`;
+      case "reddit": return `r/${summary.redditSubreddit || "post"}`;
+      case "github": return `${summary.githubOwner}/${summary.githubRepo}#${summary.githubNumber}`;
+      case "image": return summary.imageCount === 1 ? summary.imageFileNames?.[0] || "Image" : `${summary.imageCount} Images`;
+      default: return "Pasted text document";
+    }
+  };
+
+  const displayTitle = getDisplayTitle();
 
   const getInputIcon = () => {
     switch (summary.inputType) {
@@ -103,19 +152,45 @@ function SummaryItem({ summary, onDelete }: SummaryItemProps) {
         return <FileText className="size-3.5 text-red-500 shrink-0" />;
       case "url":
         return <ExternalLink className="size-3.5 text-muted-foreground shrink-0" />;
+      case "batch":
+        return <Layers className="size-3.5 text-blue-500 shrink-0" />;
+      case "twitter":
+        return <Twitter className="size-3.5 text-sky-500 shrink-0" />;
+      case "reddit":
+        return <RedditIcon className="size-3.5 text-orange-500 shrink-0" />;
+      case "github":
+        return <Github className="size-3.5 text-purple-500 shrink-0" />;
+      case "image":
+        return <Image className="size-3.5 text-green-500 shrink-0" />;
       default:
         return <FileText className="size-3.5 text-muted-foreground shrink-0" />;
     }
   };
 
+  const getAccentColor = () => {
+    switch (summary.inputType) {
+      case "youtube":
+      case "pdf":
+        return "from-red-400 via-red-500 to-red-400";
+      case "batch":
+        return "from-blue-400 via-blue-500 to-blue-400";
+      case "twitter":
+        return "from-sky-400 via-sky-500 to-sky-400";
+      case "reddit":
+        return "from-orange-400 via-orange-500 to-orange-400";
+      case "github":
+        return "from-purple-400 via-purple-500 to-purple-400";
+      case "image":
+        return "from-green-400 via-green-500 to-green-400";
+      default:
+        return "from-zinc-200 via-zinc-300 to-zinc-200 dark:from-zinc-700 dark:via-zinc-600 dark:to-zinc-700";
+    }
+  };
+
   return (
     <div className="group relative">
-      {/* Subtle left accent line - red for YouTube and PDF */}
-      <div className={`absolute left-0 top-4 bottom-4 w-px bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-        summary.inputType === "youtube" || summary.inputType === "pdf"
-          ? "from-red-400 via-red-500 to-red-400"
-          : "from-zinc-200 via-zinc-300 to-zinc-200 dark:from-zinc-700 dark:via-zinc-600 dark:to-zinc-700"
-      }`} />
+      {/* Subtle left accent line */}
+      <div className={`absolute left-0 top-4 bottom-4 w-px bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${getAccentColor()}`} />
 
       <div className="py-5 pl-4 pr-2">
         {/* Header row */}
