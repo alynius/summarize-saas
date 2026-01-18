@@ -5,7 +5,7 @@ export const createSummary = mutation({
   args: {
     userId: v.id("users"),
     url: v.optional(v.string()),
-    inputType: v.union(v.literal("url"), v.literal("text"), v.literal("youtube")),
+    inputType: v.union(v.literal("url"), v.literal("text"), v.literal("youtube"), v.literal("pdf")),
     inputTitle: v.optional(v.string()),
     inputContent: v.string(),
     inputWordCount: v.number(),
@@ -22,6 +22,9 @@ export const createSummary = mutation({
     youtubeThumbnail: v.optional(v.string()),
     youtubeChannelName: v.optional(v.string()),
     youtubeDuration: v.optional(v.string()),
+    // PDF-specific fields
+    pdfFileName: v.optional(v.string()),
+    pdfPageCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const summaryId = await ctx.db.insert("summaries", {
@@ -40,6 +43,8 @@ export const createSummary = mutation({
       youtubeThumbnail: args.youtubeThumbnail,
       youtubeChannelName: args.youtubeChannelName,
       youtubeDuration: args.youtubeDuration,
+      pdfFileName: args.pdfFileName,
+      pdfPageCount: args.pdfPageCount,
     });
 
     return summaryId;

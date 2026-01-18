@@ -14,7 +14,7 @@ export default defineSchema({
   summaries: defineTable({
     userId: v.id("users"),
     url: v.optional(v.string()),
-    inputType: v.union(v.literal("url"), v.literal("text"), v.literal("youtube")),
+    inputType: v.union(v.literal("url"), v.literal("text"), v.literal("youtube"), v.literal("pdf")),
     inputTitle: v.optional(v.string()),
     inputContent: v.string(),
     inputWordCount: v.number(),
@@ -33,6 +33,9 @@ export default defineSchema({
     youtubeThumbnail: v.optional(v.string()),
     youtubeChannelName: v.optional(v.string()),
     youtubeDuration: v.optional(v.string()),
+    // PDF-specific metadata
+    pdfFileName: v.optional(v.string()),
+    pdfPageCount: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_user_created", ["userId", "createdAt"]),

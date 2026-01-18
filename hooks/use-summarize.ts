@@ -23,6 +23,15 @@ interface YouTubeSummaryResult extends SummaryResult {
   }
 }
 
+interface PdfSummaryResult extends SummaryResult {
+  metadata: {
+    fileName: string
+    pageCount: number
+    title?: string
+    author?: string
+  }
+}
+
 export function useSummarize() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -30,6 +39,7 @@ export function useSummarize() {
 
   const summarizeAction = useAction(api.actions.summarize.summarize)
   const summarizeYoutubeAction = useAction(api.actions.summarizeYoutube.summarizeYoutube)
+  const summarizePdfAction = useAction(api.actions.summarizePdf.summarizePdf)
 
   const summarizeUrl = async (
     userId: Id<'users'>,
@@ -117,6 +127,42 @@ export function useSummarize() {
     }
   }
 
+  const summarizePdf = async (
+    userId: Id<'users'>,
+    pdfBase64: string,
+    fileName: string,
+    summaryLength: SummaryLength,
+    model: string
+  ): Promise<PdfSummaryResult> => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const res = await summarizePdfAction({
+        userId,
+        pdfBase64,
+        fileName,
+        summaryLength,
+        model,
+      })
+      // Map the result to match SummaryResult interface
+      const mappedResult: SummaryResult = {
+        summaryId: res.summaryId,
+        summary: res.summary,
+        title: res.metadata.title || res.metadata.fileName,
+        wordCount: res.wordCount,
+        tokensUsed: res.tokensUsed,
+      }
+      setResult(mappedResult)
+      return res
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to summarize PDF'
+      setError(message)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const reset = () => {
     setResult(null)
     setError(null)
@@ -126,6 +172,7 @@ export function useSummarize() {
     summarizeUrl,
     summarizeText,
     summarizeYoutube,
+    summarizePdf,
     isLoading,
     error,
     result,

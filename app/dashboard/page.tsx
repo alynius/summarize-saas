@@ -7,18 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UrlInput } from "@/components/summarize/url-input";
 import { TextInput } from "@/components/summarize/text-input";
+import { PdfInput } from "@/components/summarize/pdf-input";
 import { LengthSelector } from "@/components/summarize/length-selector";
 import { ModelSelector } from "@/components/summarize/model-selector";
 import { SummaryCard } from "@/components/summarize/summary-card";
 import { SummarizingState } from "@/components/summarize/summarizing-state";
-import { Link, FileText, Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { Link, FileText, Sparkles, AlertCircle, Loader2, FileUp } from "lucide-react";
 import type { SummaryLength } from "@/lib/summarize/types";
 import { useCurrentUser } from "@/hooks/use-user";
 import { useSummarize } from "@/hooks/use-summarize";
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
-  const { summarizeUrl, summarizeText, summarizeYoutube, isLoading, error, result, reset } = useSummarize();
+  const { summarizeUrl, summarizeText, summarizeYoutube, summarizePdf, isLoading, error, result, reset } = useSummarize();
 
   const [length, setLength] = useState<SummaryLength>("medium");
   const [model, setModel] = useState("gpt-4o");
@@ -48,6 +49,27 @@ export default function DashboardPage() {
     reset();
     try {
       await summarizeText(user._id, text, length, model);
+    } catch {
+      // Error is handled by the hook
+    }
+  };
+
+  const handlePdfSubmit = async (file: File) => {
+    if (!user?._id) return;
+    reset();
+    try {
+      // Convert file to base64 using browser-native FileReader
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove data URL prefix (e.g., "data:application/pdf;base64,")
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      await summarizePdf(user._id, base64, file.name, length, model);
     } catch {
       // Error is handled by the hook
     }
@@ -104,7 +126,7 @@ export default function DashboardPage() {
 
           {/* Input Tabs */}
           <Tabs defaultValue="url" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="url" className="gap-2" disabled={isLoading}>
                 <Link className="h-4 w-4" />
                 URL
@@ -112,6 +134,10 @@ export default function DashboardPage() {
               <TabsTrigger value="text" className="gap-2" disabled={isLoading}>
                 <FileText className="h-4 w-4" />
                 Text
+              </TabsTrigger>
+              <TabsTrigger value="pdf" className="gap-2" disabled={isLoading}>
+                <FileUp className="h-4 w-4" />
+                PDF
               </TabsTrigger>
             </TabsList>
             <TabsContent value="url" className="mt-4">
@@ -123,6 +149,9 @@ export default function DashboardPage() {
             </TabsContent>
             <TabsContent value="text" className="mt-4">
               <TextInput onSubmit={handleTextSubmit} isLoading={isLoading} />
+            </TabsContent>
+            <TabsContent value="pdf" className="mt-4">
+              <PdfInput onSubmit={handlePdfSubmit} isLoading={isLoading} />
             </TabsContent>
           </Tabs>
         </CardContent>

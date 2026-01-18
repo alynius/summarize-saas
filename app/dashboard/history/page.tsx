@@ -63,7 +63,7 @@ type SummaryData = {
   _id: Id<"summaries">;
   userId: Id<"users">;
   url?: string;
-  inputType: "url" | "text" | "youtube";
+  inputType: "url" | "text" | "youtube" | "pdf";
   inputTitle?: string;
   inputContent: string;
   inputWordCount: number;
@@ -77,6 +77,9 @@ type SummaryData = {
   youtubeThumbnail?: string;
   youtubeChannelName?: string;
   youtubeDuration?: string;
+  // PDF-specific fields
+  pdfFileName?: string;
+  pdfPageCount?: number;
 };
 
 interface SummaryItemProps {
@@ -89,12 +92,15 @@ function SummaryItem({ summary, onDelete }: SummaryItemProps) {
 
   const displayTitle = summary.inputTitle ||
     (summary.inputType === "youtube" ? "YouTube Video" :
+     summary.inputType === "pdf" ? (summary.pdfFileName || "PDF Document") :
      summary.inputType === "url" ? "URL Summary" : "Pasted text document");
 
   const getInputIcon = () => {
     switch (summary.inputType) {
       case "youtube":
         return <Youtube className="size-3.5 text-red-500 shrink-0" />;
+      case "pdf":
+        return <FileText className="size-3.5 text-red-500 shrink-0" />;
       case "url":
         return <ExternalLink className="size-3.5 text-muted-foreground shrink-0" />;
       default:
@@ -104,9 +110,9 @@ function SummaryItem({ summary, onDelete }: SummaryItemProps) {
 
   return (
     <div className="group relative">
-      {/* Subtle left accent line - red for YouTube */}
+      {/* Subtle left accent line - red for YouTube and PDF */}
       <div className={`absolute left-0 top-4 bottom-4 w-px bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-        summary.inputType === "youtube"
+        summary.inputType === "youtube" || summary.inputType === "pdf"
           ? "from-red-400 via-red-500 to-red-400"
           : "from-zinc-200 via-zinc-300 to-zinc-200 dark:from-zinc-700 dark:via-zinc-600 dark:to-zinc-700"
       }`} />
@@ -145,6 +151,14 @@ function SummaryItem({ summary, onDelete }: SummaryItemProps) {
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                 <User className="size-3" />
                 <span>{summary.youtubeChannelName}</span>
+              </div>
+            )}
+
+            {/* PDF page count */}
+            {summary.inputType === "pdf" && summary.pdfPageCount && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <FileText className="size-3" />
+                <span>{summary.pdfPageCount} {summary.pdfPageCount === 1 ? "page" : "pages"}</span>
               </div>
             )}
 
