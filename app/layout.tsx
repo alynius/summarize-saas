@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" className="dark">
         <head>
           <title>DigestAI - AI-Powered Summarization</title>
           <meta name="description" content="Summarize any URL or text in seconds with AI. Choose your length, pick your model, get instant insights." />

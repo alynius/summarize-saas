@@ -105,7 +105,7 @@ const sourceTypes: {
     label: "GitHub",
     description: "PRs and Issues",
     icon: Github,
-    gradient: "from-zinc-400 to-zinc-500",
+    gradient: "from-slate-400 to-slate-500",
   },
   {
     id: "image",
@@ -306,8 +306,8 @@ export default function DashboardPage() {
       >
         <div className="flex gap-4 min-h-[420px]">
           {/* Source Sidebar */}
-          <div className="w-48 flex-shrink-0 bg-zinc-900/50 backdrop-blur-xl rounded-2xl border border-zinc-800/50 p-3">
-            <p className="text-xs text-zinc-500 px-3 py-2 font-medium uppercase tracking-wide">
+          <div className="w-48 flex-shrink-0 rounded-2xl border border-border bg-card p-3">
+            <p className="text-xs text-muted-foreground px-3 py-2 font-medium uppercase tracking-wide">
               Sources
             </p>
             <nav className="space-y-1">
@@ -323,22 +323,22 @@ export default function DashboardPage() {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all relative",
                       isSelected
-                        ? "bg-gradient-to-r from-amber-500/15 to-amber-400/5 text-amber-400"
-                        : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50",
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
                       isLoading && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     {isSelected && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="absolute left-0 top-1 bottom-1 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"
+                        className="absolute left-0 top-1 bottom-1 w-1 bg-primary rounded-full"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
                       />
                     )}
                     <Icon
                       className={cn(
                         "h-4 w-4 flex-shrink-0",
-                        isSelected && "text-amber-400"
+                        isSelected && "text-primary"
                       )}
                     />
                     <span className="text-sm font-medium truncate">
@@ -351,9 +351,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 glass-card rounded-2xl border border-zinc-800/50 overflow-hidden">
+          <div className="flex-1 glass-card rounded-2xl overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-zinc-800/50 bg-zinc-900/30">
+            <div className="px-6 py-4 border-b border-border bg-card/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {currentSource && (
@@ -367,17 +367,17 @@ export default function DashboardPage() {
                     </div>
                   )}
                   <div>
-                    <h2 className="text-lg font-semibold text-white">
+                    <h2 className="text-lg font-semibold text-foreground">
                       {currentSource?.label}
                     </h2>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-muted-foreground">
                       {currentSource?.description}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-amber-400" />
-                  <span className="text-sm text-zinc-400">AI-Powered</span>
+                  <Zap className="h-4 w-4 text-primary" />
+                  <span className="text-sm text-muted-foreground">AI-Powered</span>
                 </div>
               </div>
             </div>
@@ -397,9 +397,9 @@ export default function DashboardPage() {
               </AnimatePresence>
 
               {/* Options */}
-              <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-zinc-800/50">
+              <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-border">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-500">Length:</span>
+                  <span className="text-sm text-muted-foreground">Length:</span>
                   <LengthSelector
                     value={length}
                     onChange={setLength}
@@ -407,7 +407,7 @@ export default function DashboardPage() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-500">Model:</span>
+                  <span className="text-sm text-muted-foreground">Model:</span>
                   <ModelSelector
                     value={model}
                     onChange={setModel}
@@ -438,18 +438,18 @@ export default function DashboardPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-dashed border-zinc-800 bg-zinc-900/30">
+          <Card className="border-dashed border-border bg-card/50">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <div className="relative mb-5">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-violet-500/10 rounded-full blur-2xl" />
-                <div className="relative bg-zinc-800/50 rounded-full p-4">
-                  <FileText className="h-8 w-8 text-zinc-500" />
+                <div className="absolute inset-0 bg-primary/5 rounded-full blur-2xl" />
+                <div className="relative bg-muted rounded-full p-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
                 </div>
               </div>
-              <h3 className="mb-2 text-base font-semibold text-zinc-300">
+              <h3 className="mb-2 text-base font-semibold text-foreground">
                 No summary yet
               </h3>
-              <p className="max-w-sm text-sm text-zinc-500 leading-relaxed">
+              <p className="max-w-sm text-sm text-muted-foreground leading-relaxed">
                 Select a source type and enter your content to generate an
                 AI-powered summary.
               </p>
