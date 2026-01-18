@@ -18,7 +18,7 @@ import { useSummarize } from "@/hooks/use-summarize";
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
-  const { summarizeUrl, summarizeText, isLoading, error, result, reset } = useSummarize();
+  const { summarizeUrl, summarizeText, summarizeYoutube, isLoading, error, result, reset } = useSummarize();
 
   const [length, setLength] = useState<SummaryLength>("medium");
   const [model, setModel] = useState("gpt-4o");
@@ -28,6 +28,16 @@ export default function DashboardPage() {
     reset();
     try {
       await summarizeUrl(user._id, url, length, model);
+    } catch {
+      // Error is handled by the hook
+    }
+  };
+
+  const handleYouTubeSubmit = async (url: string) => {
+    if (!user?._id) return;
+    reset();
+    try {
+      await summarizeYoutube(user._id, url, length, model);
     } catch {
       // Error is handled by the hook
     }
@@ -105,7 +115,11 @@ export default function DashboardPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="url" className="mt-4">
-              <UrlInput onSubmit={handleUrlSubmit} isLoading={isLoading} />
+              <UrlInput
+                onSubmit={handleUrlSubmit}
+                onYouTubeSubmit={handleYouTubeSubmit}
+                isLoading={isLoading}
+              />
             </TabsContent>
             <TabsContent value="text" className="mt-4">
               <TextInput onSubmit={handleTextSubmit} isLoading={isLoading} />

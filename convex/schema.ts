@@ -14,7 +14,7 @@ export default defineSchema({
   summaries: defineTable({
     userId: v.id("users"),
     url: v.optional(v.string()),
-    inputType: v.union(v.literal("url"), v.literal("text")),
+    inputType: v.union(v.literal("url"), v.literal("text"), v.literal("youtube")),
     inputTitle: v.optional(v.string()),
     inputContent: v.string(),
     inputWordCount: v.number(),
@@ -28,6 +28,11 @@ export default defineSchema({
     model: v.string(),
     tokensUsed: v.optional(v.number()),
     createdAt: v.number(),
+    // YouTube-specific metadata
+    youtubeVideoId: v.optional(v.string()),
+    youtubeThumbnail: v.optional(v.string()),
+    youtubeChannelName: v.optional(v.string()),
+    youtubeDuration: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_user_created", ["userId", "createdAt"]),

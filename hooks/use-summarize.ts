@@ -15,12 +15,21 @@ interface SummaryResult {
   tokensUsed: number
 }
 
+interface YouTubeSummaryResult extends SummaryResult {
+  metadata: {
+    title: string
+    channelName: string
+    thumbnail: string
+  }
+}
+
 export function useSummarize() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SummaryResult | null>(null)
 
   const summarizeAction = useAction(api.actions.summarize.summarize)
+  const summarizeYoutubeAction = useAction(api.actions.summarizeYoutube.summarizeYoutube)
 
   const summarizeUrl = async (
     userId: Id<'users'>,
@@ -74,6 +83,40 @@ export function useSummarize() {
     }
   }
 
+  const summarizeYoutube = async (
+    userId: Id<'users'>,
+    url: string,
+    summaryLength: SummaryLength,
+    model: string
+  ): Promise<YouTubeSummaryResult> => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const res = await summarizeYoutubeAction({
+        userId,
+        url,
+        summaryLength,
+        model,
+      })
+      // Map the result to match SummaryResult interface
+      const mappedResult: SummaryResult = {
+        summaryId: res.summaryId,
+        summary: res.summary,
+        title: res.metadata.title,
+        wordCount: res.wordCount,
+        tokensUsed: res.tokensUsed,
+      }
+      setResult(mappedResult)
+      return res
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to summarize YouTube video'
+      setError(message)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const reset = () => {
     setResult(null)
     setError(null)
@@ -82,6 +125,7 @@ export function useSummarize() {
   return {
     summarizeUrl,
     summarizeText,
+    summarizeYoutube,
     isLoading,
     error,
     result,

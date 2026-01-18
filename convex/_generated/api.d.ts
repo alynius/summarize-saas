@@ -9,6 +9,7 @@
  */
 
 import type * as actions_summarize from "../actions/summarize.js";
+import type * as actions_summarizeYoutube from "../actions/summarizeYoutube.js";
 import type * as summaries from "../summaries.js";
 import type * as usage from "../usage.js";
 import type * as users from "../users.js";
@@ -21,6 +22,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "actions/summarize": typeof actions_summarize;
+  "actions/summarizeYoutube": typeof actions_summarizeYoutube;
   summaries: typeof summaries;
   usage: typeof usage;
   users: typeof users;

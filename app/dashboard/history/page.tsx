@@ -15,6 +15,8 @@ import {
   Sparkles,
   History as HistoryIcon,
   Loader2,
+  Youtube,
+  User,
 } from "lucide-react";
 import { useCurrentUser, useSummaries } from "@/hooks";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -61,7 +63,7 @@ type SummaryData = {
   _id: Id<"summaries">;
   userId: Id<"users">;
   url?: string;
-  inputType: "url" | "text";
+  inputType: "url" | "text" | "youtube";
   inputTitle?: string;
   inputContent: string;
   inputWordCount: number;
@@ -70,6 +72,11 @@ type SummaryData = {
   model: string;
   tokensUsed?: number;
   createdAt: number;
+  // YouTube-specific fields
+  youtubeVideoId?: string;
+  youtubeThumbnail?: string;
+  youtubeChannelName?: string;
+  youtubeDuration?: string;
 };
 
 interface SummaryItemProps {
@@ -80,27 +87,66 @@ interface SummaryItemProps {
 function SummaryItem({ summary, onDelete }: SummaryItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const displayTitle = summary.inputTitle || (summary.inputType === "url" ? "URL Summary" : "Pasted text document");
+  const displayTitle = summary.inputTitle ||
+    (summary.inputType === "youtube" ? "YouTube Video" :
+     summary.inputType === "url" ? "URL Summary" : "Pasted text document");
+
+  const getInputIcon = () => {
+    switch (summary.inputType) {
+      case "youtube":
+        return <Youtube className="size-3.5 text-red-500 shrink-0" />;
+      case "url":
+        return <ExternalLink className="size-3.5 text-muted-foreground shrink-0" />;
+      default:
+        return <FileText className="size-3.5 text-muted-foreground shrink-0" />;
+    }
+  };
 
   return (
     <div className="group relative">
-      {/* Subtle left accent line */}
-      <div className="absolute left-0 top-4 bottom-4 w-px bg-gradient-to-b from-zinc-200 via-zinc-300 to-zinc-200 dark:from-zinc-700 dark:via-zinc-600 dark:to-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      {/* Subtle left accent line - red for YouTube */}
+      <div className={`absolute left-0 top-4 bottom-4 w-px bg-gradient-to-b opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+        summary.inputType === "youtube"
+          ? "from-red-400 via-red-500 to-red-400"
+          : "from-zinc-200 via-zinc-300 to-zinc-200 dark:from-zinc-700 dark:via-zinc-600 dark:to-zinc-700"
+      }`} />
 
       <div className="py-5 pl-4 pr-2">
         {/* Header row */}
         <div className="flex items-start justify-between gap-4">
+          {/* YouTube thumbnail */}
+          {summary.inputType === "youtube" && summary.youtubeThumbnail && (
+            <div className="shrink-0 w-24 h-14 rounded-md overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+              <img
+                src={summary.youtubeThumbnail}
+                alt={displayTitle}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to hqdefault if maxresdefault fails
+                  const target = e.target as HTMLImageElement;
+                  if (target.src.includes('maxresdefault')) {
+                    target.src = target.src.replace('maxresdefault', 'hqdefault');
+                  }
+                }}
+              />
+            </div>
+          )}
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
-              {summary.inputType === "url" ? (
-                <ExternalLink className="size-3.5 text-muted-foreground shrink-0" />
-              ) : (
-                <FileText className="size-3.5 text-muted-foreground shrink-0" />
-              )}
+              {getInputIcon()}
               <h3 className="font-medium text-sm truncate text-foreground/90">
                 {displayTitle}
               </h3>
             </div>
+
+            {/* YouTube channel name */}
+            {summary.inputType === "youtube" && summary.youtubeChannelName && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <User className="size-3" />
+                <span>{summary.youtubeChannelName}</span>
+              </div>
+            )}
 
             {summary.url && (
               <a
