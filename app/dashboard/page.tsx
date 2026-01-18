@@ -289,7 +289,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-2">
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
@@ -304,13 +304,13 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="flex gap-4 min-h-[420px]">
+        <div className="flex gap-5 min-h-[500px]">
           {/* Source Sidebar */}
-          <div className="w-48 flex-shrink-0 rounded-2xl border border-border bg-card p-3">
+          <div className="w-52 flex-shrink-0 rounded-2xl border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground px-3 py-2 font-medium uppercase tracking-wide">
               Sources
             </p>
-            <nav className="space-y-1">
+            <nav className="space-y-1.5">
               {sourceTypes.map((source) => {
                 const Icon = source.icon;
                 const isSelected = selectedSource === source.id;
@@ -321,7 +321,7 @@ export default function DashboardPage() {
                     onClick={() => !isLoading && setSelectedSource(source.id)}
                     disabled={isLoading}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all relative",
+                      "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all relative",
                       isSelected
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground hover:bg-accent",
@@ -331,13 +331,13 @@ export default function DashboardPage() {
                     {isSelected && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="absolute left-0 top-1 bottom-1 w-1 bg-primary rounded-full"
+                        className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-primary rounded-full"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
                       />
                     )}
                     <Icon
                       className={cn(
-                        "h-4 w-4 flex-shrink-0",
+                        "h-5 w-5 flex-shrink-0",
                         isSelected && "text-primary"
                       )}
                     />
@@ -353,21 +353,21 @@ export default function DashboardPage() {
           {/* Main Content Area */}
           <div className="flex-1 glass-card rounded-2xl overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-border bg-card/50">
+            <div className="px-8 py-5 border-b border-border bg-card/50">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {currentSource && (
                     <div
                       className={cn(
-                        "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center",
+                        "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center",
                         currentSource.gradient
                       )}
                     >
-                      <currentSource.icon className="h-5 w-5 text-white" />
+                      <currentSource.icon className="h-6 w-6 text-white" />
                     </div>
                   )}
                   <div>
-                    <h2 className="text-lg font-semibold text-foreground">
+                    <h2 className="text-xl font-semibold text-foreground">
                       {currentSource?.label}
                     </h2>
                     <p className="text-sm text-muted-foreground">
@@ -383,7 +383,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Input Content */}
-            <div className="p-6">
+            <div className="p-8">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedSource}
@@ -397,7 +397,7 @@ export default function DashboardPage() {
               </AnimatePresence>
 
               {/* Options */}
-              <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-border">
+              <div className="flex flex-wrap items-center gap-6 mt-8 pt-6 border-t border-border">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Length:</span>
                   <LengthSelector
@@ -439,17 +439,17 @@ export default function DashboardPage() {
           transition={{ delay: 0.2 }}
         >
           <Card className="border-dashed border-border bg-card/50">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="relative mb-5">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="relative mb-6">
                 <div className="absolute inset-0 bg-primary/5 rounded-full blur-2xl" />
-                <div className="relative bg-muted rounded-full p-4">
-                  <FileText className="h-8 w-8 text-muted-foreground" />
+                <div className="relative bg-muted rounded-full p-5">
+                  <FileText className="h-10 w-10 text-muted-foreground" />
                 </div>
               </div>
-              <h3 className="mb-2 text-base font-semibold text-foreground">
+              <h3 className="mb-2 text-lg font-semibold text-foreground">
                 No summary yet
               </h3>
-              <p className="max-w-sm text-sm text-muted-foreground leading-relaxed">
+              <p className="max-w-md text-sm text-muted-foreground leading-relaxed">
                 Select a source type and enter your content to generate an
                 AI-powered summary.
               </p>
