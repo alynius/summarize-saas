@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { YouTubeInput } from "@/components/summarize/youtube-input";
 import { UrlInput } from "@/components/summarize/url-input";
 import { TextInput } from "@/components/summarize/text-input";
 import { PdfInput } from "@/components/summarize/pdf-input";
@@ -12,8 +12,7 @@ import { TwitterInput } from "@/components/summarize/twitter-input";
 import { RedditInput } from "@/components/summarize/reddit-input";
 import { GithubInput } from "@/components/summarize/github-input";
 import { ImageInput } from "@/components/summarize/image-input";
-import { LengthSelector } from "@/components/summarize/length-selector";
-import { ModelSelector } from "@/components/summarize/model-selector";
+import { OptionsToolbar } from "@/components/summarize/options-toolbar";
 import { SummaryCard } from "@/components/summarize/summary-card";
 import { SummarizingState } from "@/components/summarize/summarizing-state";
 import {
@@ -23,7 +22,6 @@ import {
   Loader2,
   FileUp,
   Layers,
-  Twitter,
   Github,
   Image,
   Zap,
@@ -41,11 +39,30 @@ function RedditIcon({ className }: { className?: string }) {
   );
 }
 
+// YouTube icon component
+function YouTubeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
+
+// X (Twitter) icon component
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
+
 type SourceType =
+  | "youtube"
   | "url"
+  | "batch"
   | "text"
   | "pdf"
-  | "batch"
   | "twitter"
   | "reddit"
   | "github"
@@ -57,27 +74,23 @@ const sourceTypes: {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   gradient: string;
+  color: string;
 }[] = [
+  {
+    id: "youtube",
+    label: "YouTube",
+    description: "Summarize videos",
+    icon: YouTubeIcon,
+    gradient: "from-red-500 to-red-600",
+    color: "red",
+  },
   {
     id: "url",
     label: "URL",
     description: "Summarize any webpage",
     icon: Link,
     gradient: "from-blue-500 to-blue-600",
-  },
-  {
-    id: "text",
-    label: "Text",
-    description: "Paste content directly",
-    icon: FileText,
-    gradient: "from-emerald-500 to-emerald-600",
-  },
-  {
-    id: "pdf",
-    label: "PDF",
-    description: "Upload documents",
-    icon: FileUp,
-    gradient: "from-red-500 to-red-600",
+    color: "blue",
   },
   {
     id: "batch",
@@ -85,13 +98,31 @@ const sourceTypes: {
     description: "Multiple URLs at once",
     icon: Layers,
     gradient: "from-violet-500 to-violet-600",
+    color: "violet",
+  },
+  {
+    id: "text",
+    label: "Text",
+    description: "Paste content directly",
+    icon: FileText,
+    gradient: "from-emerald-500 to-emerald-600",
+    color: "emerald",
+  },
+  {
+    id: "pdf",
+    label: "PDF",
+    description: "Upload documents",
+    icon: FileUp,
+    gradient: "from-amber-500 to-amber-600",
+    color: "amber",
   },
   {
     id: "twitter",
-    label: "Twitter",
-    description: "Summarize threads",
-    icon: Twitter,
-    gradient: "from-sky-400 to-sky-500",
+    label: "X",
+    description: "Summarize posts & threads",
+    icon: XIcon,
+    gradient: "from-zinc-600 to-zinc-700",
+    color: "zinc",
   },
   {
     id: "reddit",
@@ -99,6 +130,7 @@ const sourceTypes: {
     description: "Posts & comments",
     icon: RedditIcon,
     gradient: "from-orange-500 to-orange-600",
+    color: "orange",
   },
   {
     id: "github",
@@ -106,6 +138,7 @@ const sourceTypes: {
     description: "PRs and Issues",
     icon: Github,
     gradient: "from-slate-400 to-slate-500",
+    color: "slate",
   },
   {
     id: "image",
@@ -113,8 +146,26 @@ const sourceTypes: {
     description: "OCR & summarize",
     icon: Image,
     gradient: "from-pink-500 to-pink-600",
+    color: "pink",
   },
 ];
+
+// Helper to get Tailwind color classes for icons
+const getIconColorClasses = (color: string, isSelected: boolean) => {
+  const colorMap: Record<string, { muted: string; full: string }> = {
+    blue: { muted: "text-blue-400/50", full: "text-blue-500" },
+    emerald: { muted: "text-emerald-400/50", full: "text-emerald-500" },
+    red: { muted: "text-red-400/50", full: "text-red-500" },
+    amber: { muted: "text-amber-400/50", full: "text-amber-500" },
+    violet: { muted: "text-violet-400/50", full: "text-violet-500" },
+    zinc: { muted: "text-zinc-400/50", full: "text-zinc-400" },
+    orange: { muted: "text-orange-400/50", full: "text-orange-500" },
+    slate: { muted: "text-slate-400/50", full: "text-slate-400" },
+    pink: { muted: "text-pink-400/50", full: "text-pink-500" },
+  };
+  const colors = colorMap[color] || colorMap.blue;
+  return isSelected ? colors.full : colors.muted;
+};
 
 export default function DashboardPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
@@ -134,7 +185,7 @@ export default function DashboardPage() {
     reset,
   } = useSummarize();
 
-  const [selectedSource, setSelectedSource] = useState<SourceType>("url");
+  const [selectedSource, setSelectedSource] = useState<SourceType>("youtube");
   const [length, setLength] = useState<SummaryLength>("medium");
   const [model, setModel] = useState("gpt-4o");
 
@@ -243,6 +294,13 @@ export default function DashboardPage() {
 
   const renderInput = () => {
     switch (selectedSource) {
+      case "youtube":
+        return (
+          <YouTubeInput
+            onSubmit={handleYouTubeSubmit}
+            isLoading={isLoading}
+          />
+        );
       case "url":
         return (
           <UrlInput
@@ -289,7 +347,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-2">
+    <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4">
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
@@ -304,46 +362,68 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="flex gap-5 min-h-[500px]">
+        <div className="flex gap-6 min-h-[560px]">
           {/* Source Sidebar */}
-          <div className="w-52 flex-shrink-0 rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground px-3 py-2 font-medium uppercase tracking-wide">
+          <div className="w-72 flex-shrink-0 rounded-2xl border border-border bg-card p-5">
+            <p className="text-sm text-muted-foreground px-4 py-3 font-medium uppercase tracking-wide">
               Sources
             </p>
             <nav className="space-y-1.5">
               {sourceTypes.map((source) => {
                 const Icon = source.icon;
                 const isSelected = selectedSource === source.id;
+                const iconColorClass = getIconColorClasses(source.color, isSelected);
 
                 return (
                   <button
                     key={source.id}
                     onClick={() => !isLoading && setSelectedSource(source.id)}
                     disabled={isLoading}
+                    aria-pressed={isSelected}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all relative",
+                      "w-full flex items-start gap-4 px-4 py-3.5 rounded-xl text-left transition-colors duration-200 relative group",
                       isSelected
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                        ? "bg-amber-500/10"
+                        : "hover:bg-accent/80",
                       isLoading && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     {isSelected && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-primary rounded-full"
+                        className="absolute left-0 top-2.5 bottom-2.5 w-1 bg-amber-500 rounded-full"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
                       />
                     )}
                     <Icon
                       className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        isSelected && "text-primary"
+                        "h-6 w-6 flex-shrink-0 mt-0.5 transition-colors duration-200",
+                        iconColorClass,
+                        !isSelected && "group-hover:opacity-80"
                       )}
                     />
-                    <span className="text-sm font-medium truncate">
-                      {source.label}
-                    </span>
+                    <div className="flex flex-col min-w-0 gap-0.5">
+                      <span
+                        className={cn(
+                          "text-base font-medium truncate transition-colors duration-200",
+                          isSelected
+                            ? "text-foreground"
+                            : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      >
+                        {source.label}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-sm truncate transition-colors duration-200",
+                          isSelected
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground/60 group-hover:text-muted-foreground"
+                        )}
+                      >
+                        {source.description}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
@@ -353,37 +433,37 @@ export default function DashboardPage() {
           {/* Main Content Area */}
           <div className="flex-1 glass-card rounded-2xl overflow-hidden">
             {/* Header */}
-            <div className="px-8 py-5 border-b border-border bg-card/50">
+            <div className="px-10 py-6 border-b border-border bg-card/50">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-5">
                   {currentSource && (
                     <div
                       className={cn(
-                        "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center",
+                        "w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center",
                         currentSource.gradient
                       )}
                     >
-                      <currentSource.icon className="h-6 w-6 text-white" />
+                      <currentSource.icon className="h-7 w-7 text-white" />
                     </div>
                   )}
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground">
+                    <h2 className="text-2xl font-semibold text-foreground">
                       {currentSource?.label}
                     </h2>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       {currentSource?.description}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-primary" />
-                  <span className="text-sm text-muted-foreground">AI-Powered</span>
+                <div className="flex items-center gap-2.5">
+                  <Zap className="h-5 w-5 text-primary" />
+                  <span className="text-base text-muted-foreground">AI-Powered</span>
                 </div>
               </div>
             </div>
 
             {/* Input Content */}
-            <div className="p-8">
+            <div className="p-10">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedSource}
@@ -396,24 +476,15 @@ export default function DashboardPage() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Options */}
-              <div className="flex flex-wrap items-center gap-6 mt-8 pt-6 border-t border-border">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Length:</span>
-                  <LengthSelector
-                    value={length}
-                    onChange={setLength}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Model:</span>
-                  <ModelSelector
-                    value={model}
-                    onChange={setModel}
-                    disabled={isLoading}
-                  />
-                </div>
+              {/* Options Toolbar */}
+              <div className="mt-10 pt-8 border-t border-border">
+                <OptionsToolbar
+                  length={length}
+                  onLengthChange={setLength}
+                  model={model}
+                  onModelChange={setModel}
+                  disabled={isLoading}
+                />
               </div>
             </div>
           </div>
@@ -434,27 +505,52 @@ export default function DashboardPage() {
         />
       ) : (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="glass-card rounded-2xl overflow-hidden"
         >
-          <Card className="border-dashed border-border bg-card/50">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-primary/5 rounded-full blur-2xl" />
-                <div className="relative bg-muted rounded-full p-5">
-                  <FileText className="h-10 w-10 text-muted-foreground" />
-                </div>
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-foreground">
-                No summary yet
-              </h3>
-              <p className="max-w-md text-sm text-muted-foreground leading-relaxed">
-                Select a source type and enter your content to generate an
-                AI-powered summary.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-24 px-10 text-center relative">
+            {/* Ambient background glow */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-subtle-pulse" />
+            </div>
+
+            {/* Icon with layered effects */}
+            <div className="relative mb-10">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl blur-xl scale-150" />
+              <motion.div
+                className="relative bg-gradient-to-br from-muted to-muted/50 rounded-2xl p-8 border border-border shadow-lg"
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Zap className="h-12 w-12 text-primary" />
+              </motion.div>
+            </div>
+
+            {/* Text content */}
+            <h3 className="mb-4 text-2xl font-semibold text-foreground">
+              Ready to summarize
+            </h3>
+            <p className="max-w-md text-base text-muted-foreground leading-relaxed mb-8">
+              Choose a source from the sidebar and paste your content. Our AI will generate a concise, accurate summary in seconds.
+            </p>
+
+            {/* Feature hints */}
+            <div className="flex flex-wrap justify-center gap-3">
+              {["URLs", "PDFs", "YouTube", "Twitter", "GitHub"].map((item, i) => (
+                <motion.span
+                  key={item}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + i * 0.1 }}
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted/50 rounded-full border border-border"
+                >
+                  {item}
+                </motion.span>
+              ))}
+            </div>
+          </div>
         </motion.div>
       )}
     </div>
