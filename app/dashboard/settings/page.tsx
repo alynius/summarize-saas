@@ -28,6 +28,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { SUMMARY_LENGTHS, DEFAULT_MODEL } from "@/lib/constants";
+import { AnimatedProgress } from "@/components/ui/animated-progress";
 
 const AVAILABLE_MODELS = [
   { value: "gpt-4o-mini", label: "GPT-4o Mini", tier: "free" },
@@ -87,32 +88,22 @@ function UsageBar({
   const isNearLimit = percentage >= 80;
   const isAtLimit = percentage >= 100;
 
+  // Determine variant based on usage
+  const variant = isAtLimit ? "error" : isNearLimit ? "warning" : "success";
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-baseline justify-between">
-        <span className="text-2xl font-semibold tabular-nums">
-          {used}
-          <span className="text-sm font-normal text-muted-foreground">
-            /{limit}
-          </span>
-        </span>
         <span className="text-xs text-muted-foreground">
           summaries this month
         </span>
       </div>
 
-      <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-        <div
-          className={`h-full transition-all duration-500 ease-out rounded-full ${
-            isAtLimit
-              ? "bg-destructive"
-              : isNearLimit
-                ? "bg-amber-500"
-                : "bg-gradient-to-r from-emerald-400 to-emerald-500"
-          }`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
+      <AnimatedProgress
+        value={used}
+        max={limit}
+        variant={variant}
+      />
 
       {isNearLimit && !isAtLimit && (
         <p className="text-xs text-amber-600 dark:text-amber-400">
