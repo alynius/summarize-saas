@@ -165,13 +165,13 @@ export function UrlInput({
         />
       )}
 
-      {/* No Captions Info - Will use Whisper */}
+      {/* No Captions Warning */}
       {isYouTube && hasCaptions === false && !isFetchingMetadata && (
-        <Alert className="border-blue-500/50 bg-blue-500/10">
-          <AlertTriangle className="h-4 w-4 text-blue-400" />
-          <AlertDescription className="text-blue-200">
-            This video doesn&apos;t have captions. We&apos;ll use AI audio transcription
-            which may take a bit longer and work best on videos under 2 hours.
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-400" />
+          <AlertDescription className="text-amber-200">
+            This video doesn&apos;t have captions available. Summarization works best
+            with videos that have captions or subtitles enabled by the uploader.
           </AlertDescription>
         </Alert>
       )}
@@ -184,7 +184,7 @@ export function UrlInput({
       <p className="text-sm text-muted-foreground">
         {isYouTube
           ? hasCaptions === false
-            ? "YouTube video detected. Audio will be transcribed using AI."
+            ? "You can still try, but results may vary for videos without captions."
             : "YouTube video detected. We'll extract the transcript and summarize it."
           : "Enter a URL to extract and summarize the content from any webpage."}
       </p>

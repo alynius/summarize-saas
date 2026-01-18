@@ -373,18 +373,39 @@ async function transcribeWithWhisper(videoId: string): Promise<TranscriptionResu
  */
 async function getTranscript(videoId: string): Promise<{ text: string; usedWhisper: boolean }> {
   // First, try to get captions
+  console.log("[getTranscript] Attempting to fetch captions for:", videoId);
   try {
     const transcript = await fetchYouTubeTranscript(videoId);
     if (transcript && transcript.length > 10) {
+      console.log("[getTranscript] Got captions, length:", transcript.length);
       return { text: transcript, usedWhisper: false };
     }
+    console.log("[getTranscript] Captions too short or empty");
   } catch (error) {
-    console.log("Captions not available, falling back to Whisper transcription");
+    console.log("[getTranscript] Captions failed:", error instanceof Error ? error.message : error);
+    console.log("[getTranscript] Falling back to Whisper transcription");
   }
 
   // Fall back to Whisper transcription
-  const result = await transcribeWithWhisper(videoId);
-  return { text: result.text, usedWhisper: true };
+  try {
+    console.log("[getTranscript] Starting Whisper transcription");
+    const result = await transcribeWithWhisper(videoId);
+    console.log("[getTranscript] Whisper succeeded, length:", result.text.length);
+    return { text: result.text, usedWhisper: true };
+  } catch (whisperError) {
+    const errorMsg = whisperError instanceof Error ? whisperError.message : String(whisperError);
+    console.error("[getTranscript] Whisper failed with message:", errorMsg);
+    console.error("[getTranscript] Contains 'bot':", errorMsg.includes("bot"));
+    console.error("[getTranscript] Contains 'Sign in':", errorMsg.includes("Sign in"));
+
+    // Provide user-friendly error for common issues
+    if (errorMsg.includes("bot") || errorMsg.includes("Sign in") || errorMsg.toLowerCase().includes("confirm")) {
+      console.log("[getTranscript] Throwing friendly error");
+      throw new Error("This video doesn't have captions and audio transcription is temporarily unavailable. Please try a video with captions enabled.");
+    }
+    console.log("[getTranscript] Throwing generic error");
+    throw new Error("Unable to get transcript. This video may not have captions available.");
+  }
 }
 
 // ============================================================================
@@ -644,7 +665,8 @@ export const summarizeYoutube = action({
       throw new Error("Failed to fetch video metadata");
     }
 
-    // 4. Fetch transcript (captions first, Whisper fallback)
+    // 4. Fetch transcript (captions first, Whisper fallback) - v3-20260118
+    console.log("[summarizeYoutube v3-20260118] Starting transcript fetch for:", videoId);
     let transcript: string;
     let usedWhisper = false;
     try {
@@ -652,13 +674,14 @@ export const summarizeYoutube = action({
       transcript = transcriptResult.text;
       usedWhisper = transcriptResult.usedWhisper;
       if (usedWhisper) {
-        console.log("Used Whisper transcription for video: " + videoId);
+        console.log("[summarizeYoutube v2] Used Whisper transcription for video: " + videoId);
       }
     } catch (error) {
+      console.error("[summarizeYoutube v3-20260118] Transcript fetch failed:", error);
       if (error instanceof Error) {
-        throw new Error("Failed to fetch transcript: " + error.message);
+        throw new Error("[v3] Failed to fetch transcript: " + error.message);
       }
-      throw new Error("Failed to fetch video transcript");
+      throw new Error("[v3] Failed to fetch video transcript");
     }
 
     // 5. Validate transcript length
