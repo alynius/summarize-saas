@@ -9,6 +9,7 @@ export { extractYouTubeVideoId, isYouTubeUrl } from "./extract-video-id";
 export {
   fetchYouTubeMetadata,
   getYouTubeThumbnailUrl,
+  checkYouTubeCaptions,
   type YouTubeMetadata,
 } from "./fetch-metadata";
 

@@ -8,6 +8,7 @@ export interface YouTubeMetadata {
   channelName: string;
   thumbnail: string;
   duration?: number;
+  hasCaptions?: boolean;
 }
 
 interface OEmbedResponse {
@@ -83,6 +84,36 @@ export async function fetchYouTubeMetadata(
       throw error;
     }
     throw new Error("Failed to fetch YouTube metadata");
+  }
+}
+
+/**
+ * Check if a YouTube video has captions available
+ * @param videoId - The YouTube video ID
+ * @returns Promise resolving to true if captions are available
+ */
+export async function checkYouTubeCaptions(videoId: string): Promise<boolean> {
+  try {
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const response = await fetch(videoUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const html = await response.text();
+    // Check if captionTracks exists in the page
+    const hasCaptions = html.includes('"captionTracks":[');
+    return hasCaptions;
+  } catch {
+    // If we can't check, assume captions might be available
+    return true;
   }
 }
 

@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Link, Loader2 } from "lucide-react";
+import { Link, Loader2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isYouTubeUrl, extractYouTubeVideoId } from "@/lib/youtube";
-import { fetchYouTubeMetadata, type YouTubeMetadata } from "@/lib/youtube";
+import {
+  fetchYouTubeMetadata,
+  checkYouTubeCaptions,
+  type YouTubeMetadata,
+} from "@/lib/youtube";
 import { YouTubePreview } from "./youtube-preview";
 
 interface UrlInputProps {
@@ -26,21 +31,34 @@ export function UrlInput({
   );
   const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [hasCaptions, setHasCaptions] = useState<boolean | null>(null);
+  const [isCheckingCaptions, setIsCheckingCaptions] = useState(false);
 
-  // Fetch YouTube metadata when a YouTube URL is detected
+  // Fetch YouTube metadata and check for captions
   const fetchMetadata = useCallback(async (videoId: string) => {
     setIsFetchingMetadata(true);
+    setIsCheckingCaptions(true);
     setMetadataError(null);
+    setHasCaptions(null);
+
     try {
-      const metadata = await fetchYouTubeMetadata(videoId);
+      // Fetch metadata and check captions in parallel
+      const [metadata, captionsAvailable] = await Promise.all([
+        fetchYouTubeMetadata(videoId),
+        checkYouTubeCaptions(videoId),
+      ]);
+
       setYoutubeMetadata(metadata);
+      setHasCaptions(captionsAvailable);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to fetch video info";
       setMetadataError(message);
       setYoutubeMetadata(null);
+      setHasCaptions(null);
     } finally {
       setIsFetchingMetadata(false);
+      setIsCheckingCaptions(false);
     }
   }, []);
 
@@ -69,6 +87,7 @@ export function UrlInput({
       setIsYouTube(false);
       setYoutubeMetadata(null);
       setMetadataError(null);
+      setHasCaptions(null);
     }
 
     return () => {
@@ -92,13 +111,16 @@ export function UrlInput({
     setIsYouTube(false);
     setYoutubeMetadata(null);
     setMetadataError(null);
+    setHasCaptions(null);
   };
 
+  // Can submit if: URL exists, not loading, not fetching metadata,
+  // and for YouTube: metadata loaded AND captions available
   const canSubmit =
     url.trim() &&
     !isLoading &&
     !isFetchingMetadata &&
-    (!isYouTube || youtubeMetadata !== null);
+    (!isYouTube || (youtubeMetadata !== null && hasCaptions === true));
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -143,6 +165,17 @@ export function UrlInput({
         />
       )}
 
+      {/* No Captions Warning */}
+      {isYouTube && hasCaptions === false && !isFetchingMetadata && (
+        <Alert variant="destructive" className="border-amber-500/50 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertDescription className="text-amber-200">
+            This video doesn&apos;t have captions/subtitles available. We can only
+            summarize videos that have captions enabled by the uploader.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Metadata Error */}
       {metadataError && (
         <p className="text-sm text-destructive">{metadataError}</p>
@@ -150,7 +183,9 @@ export function UrlInput({
 
       <p className="text-sm text-muted-foreground">
         {isYouTube
-          ? "YouTube video detected. We'll extract the transcript and summarize it."
+          ? hasCaptions === false
+            ? "Try a different video with captions enabled."
+            : "YouTube video detected. We'll extract the transcript and summarize it."
           : "Enter a URL to extract and summarize the content from any webpage."}
       </p>
     </form>
