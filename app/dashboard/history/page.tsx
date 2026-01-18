@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useCurrentUser, useSummaries } from "@/hooks";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { Id } from "@/convex/_generated/dataModel";
 
 function formatRelativeTime(timestamp: number): string {
@@ -181,31 +182,6 @@ function SummaryItem({ summary, onDelete }: SummaryItemProps) {
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 px-4">
-      <div className="relative mb-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-200/50 to-zinc-300/50 dark:from-zinc-700/50 dark:to-zinc-600/50 rounded-full blur-xl" />
-        <div className="relative bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700 rounded-full p-5">
-          <HistoryIcon className="size-8 text-muted-foreground" />
-        </div>
-      </div>
-
-      <h3 className="text-lg font-semibold text-foreground mb-2">
-        No summaries yet
-      </h3>
-      <p className="text-sm text-muted-foreground text-center max-w-sm leading-relaxed">
-        Your summarized articles and text will appear here. Start by
-        summarizing a URL or pasting some text.
-      </p>
-
-      <Button className="mt-6" variant="outline" asChild>
-        <Link href="/">Create your first summary</Link>
-      </Button>
-    </div>
-  );
-}
-
 function LoadingState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4">
@@ -244,7 +220,16 @@ export default function HistoryPage() {
           {isLoading ? (
             <LoadingState />
           ) : summaries.length === 0 ? (
-            <EmptyState />
+            <EmptyState
+              icon={HistoryIcon}
+              title="No summaries yet"
+              description="Your summarized articles and text will appear here. Start by summarizing a URL or pasting some text."
+              action={
+                <Button variant="outline" asChild>
+                  <Link href="/dashboard">Create your first summary</Link>
+                </Button>
+              }
+            />
           ) : (
             <div className="divide-y divide-border">
               {summaries.map((summary: SummaryData, index: number) => (
