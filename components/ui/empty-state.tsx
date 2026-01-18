@@ -41,13 +41,13 @@ export function EmptyState({
         {/* Glassmorphic icon container */}
         <div
           className={cn(
-            "relative rounded-full bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 flex items-center justify-center",
+            "relative rounded-full bg-muted/50 backdrop-blur-sm border border-border flex items-center justify-center",
             isCompact ? "p-3" : "p-5"
           )}
         >
           <Icon
             className={cn(
-              "text-amber-400",
+              "text-amber-500",
               isCompact ? "h-6 w-6" : "h-10 w-10"
             )}
           />
@@ -58,7 +58,7 @@ export function EmptyState({
       <div className={cn("max-w-md", isCompact ? "mt-4" : "mt-6")}>
         <h3
           className={cn(
-            "font-semibold text-white",
+            "font-semibold text-foreground",
             isCompact ? "text-base" : "text-xl"
           )}
         >
@@ -66,7 +66,7 @@ export function EmptyState({
         </h3>
         <p
           className={cn(
-            "text-zinc-400",
+            "text-muted-foreground",
             isCompact ? "text-sm mt-1" : "text-base mt-2"
           )}
         >
