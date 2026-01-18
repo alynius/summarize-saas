@@ -19,3 +19,6 @@ export {
   fetchYouTubeTranscriptWithTimestamps,
   type TranscriptSegment,
 } from "./fetch-transcript";
+
+// Note: Audio transcription (Whisper) is handled server-side in Convex actions
+// and not exported here due to Node.js dependencies (ytdl-core)

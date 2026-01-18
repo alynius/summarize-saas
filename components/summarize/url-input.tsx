@@ -115,12 +115,12 @@ export function UrlInput({
   };
 
   // Can submit if: URL exists, not loading, not fetching metadata,
-  // and for YouTube: metadata loaded AND captions available
+  // and for YouTube: metadata loaded (captions no longer required - Whisper fallback)
   const canSubmit =
     url.trim() &&
     !isLoading &&
     !isFetchingMetadata &&
-    (!isYouTube || (youtubeMetadata !== null && hasCaptions === true));
+    (!isYouTube || youtubeMetadata !== null);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -165,13 +165,13 @@ export function UrlInput({
         />
       )}
 
-      {/* No Captions Warning */}
+      {/* No Captions Info - Will use Whisper */}
       {isYouTube && hasCaptions === false && !isFetchingMetadata && (
-        <Alert variant="destructive" className="border-amber-500/50 bg-amber-500/10">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <AlertDescription className="text-amber-200">
-            This video doesn&apos;t have captions/subtitles available. We can only
-            summarize videos that have captions enabled by the uploader.
+        <Alert className="border-blue-500/50 bg-blue-500/10">
+          <AlertTriangle className="h-4 w-4 text-blue-400" />
+          <AlertDescription className="text-blue-200">
+            This video doesn&apos;t have captions. We&apos;ll use AI audio transcription
+            which may take a bit longer and work best on videos under 2 hours.
           </AlertDescription>
         </Alert>
       )}
@@ -184,7 +184,7 @@ export function UrlInput({
       <p className="text-sm text-muted-foreground">
         {isYouTube
           ? hasCaptions === false
-            ? "Try a different video with captions enabled."
+            ? "YouTube video detected. Audio will be transcribed using AI."
             : "YouTube video detected. We'll extract the transcript and summarize it."
           : "Enter a URL to extract and summarize the content from any webpage."}
       </p>

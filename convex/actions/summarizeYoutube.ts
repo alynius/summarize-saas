@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { action } from "../_generated/server";
 import { api } from "../_generated/api";
 import { YoutubeTranscript } from "youtube-transcript";
+import ytdl from "@distube/ytdl-core";
 
 type SummaryLength = "short" | "medium" | "long" | "xl";
 
@@ -275,6 +276,118 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
 }
 
 // ============================================================================
+// Whisper Audio Transcription (fallback when captions unavailable)
+// ============================================================================
+
+interface TranscriptionResult {
+  text: string;
+  duration: number;
+  usedWhisper: boolean;
+}
+
+/**
+ * Transcribe YouTube audio using OpenAI Whisper API
+ * Used as fallback when captions are not available
+ */
+async function transcribeWithWhisper(videoId: string): Promise<TranscriptionResult> {
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) {
+    throw new Error("OpenAI API key is required for audio transcription");
+  }
+
+  const videoUrl = "https://www.youtube.com/watch?v=" + videoId;
+
+  // Get video info to check duration
+  const info = await ytdl.getInfo(videoUrl);
+  const durationSeconds = parseInt(info.videoDetails.lengthSeconds, 10);
+
+  // Limit to 2 hours (Whisper has a 25MB file limit)
+  if (durationSeconds > 7200) {
+    throw new Error(
+      "Video is too long for audio transcription (max 2 hours). Try a shorter video."
+    );
+  }
+
+  console.log("Downloading audio for Whisper transcription...");
+
+  // Download audio as buffer
+  const audioStream = ytdl(videoUrl, {
+    filter: "audioonly",
+    quality: "lowestaudio",
+  });
+
+  const chunks: Buffer[] = [];
+  for await (const chunk of audioStream) {
+    chunks.push(chunk as Buffer);
+  }
+  const audioBuffer = Buffer.concat(chunks);
+
+  // Check file size (Whisper limit is 25MB)
+  const fileSizeMB = audioBuffer.length / (1024 * 1024);
+  console.log("Audio size: " + fileSizeMB.toFixed(1) + "MB");
+
+  if (fileSizeMB > 25) {
+    throw new Error(
+      "Audio file too large (" + fileSizeMB.toFixed(1) + "MB). Whisper limit is 25MB. Try a shorter video."
+    );
+  }
+
+  console.log("Sending to Whisper API...");
+
+  // Create form data for Whisper API
+  const formData = new FormData();
+  const audioBlob = new Blob([audioBuffer], { type: "audio/webm" });
+  formData.append("file", audioBlob, "audio.webm");
+  formData.append("model", "whisper-1");
+  formData.append("response_format", "text");
+
+  // Call Whisper API
+  const response = await fetch(
+    "https://api.openai.com/v1/audio/transcriptions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + openaiApiKey,
+      },
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Whisper API error:", errorText);
+    throw new Error("Failed to transcribe audio. Please try again later.");
+  }
+
+  const transcription = await response.text();
+
+  return {
+    text: transcription.trim(),
+    duration: durationSeconds,
+    usedWhisper: true,
+  };
+}
+
+/**
+ * Get transcript - tries captions first, falls back to Whisper
+ */
+async function getTranscript(videoId: string): Promise<{ text: string; usedWhisper: boolean }> {
+  // First, try to get captions
+  try {
+    const transcript = await fetchYouTubeTranscript(videoId);
+    if (transcript && transcript.length > 10) {
+      return { text: transcript, usedWhisper: false };
+    }
+  } catch (error) {
+    console.log("Captions not available, falling back to Whisper transcription");
+  }
+
+  // Fall back to Whisper transcription
+  const result = await transcribeWithWhisper(videoId);
+  return { text: result.text, usedWhisper: true };
+}
+
+// ============================================================================
 // LLM Summary Generation (copied from summarize.ts)
 // ============================================================================
 
@@ -531,10 +644,16 @@ export const summarizeYoutube = action({
       throw new Error("Failed to fetch video metadata");
     }
 
-    // 4. Fetch transcript using youtube-transcript package
+    // 4. Fetch transcript (captions first, Whisper fallback)
     let transcript: string;
+    let usedWhisper = false;
     try {
-      transcript = await fetchYouTubeTranscript(videoId);
+      const transcriptResult = await getTranscript(videoId);
+      transcript = transcriptResult.text;
+      usedWhisper = transcriptResult.usedWhisper;
+      if (usedWhisper) {
+        console.log("Used Whisper transcription for video: " + videoId);
+      }
     } catch (error) {
       if (error instanceof Error) {
         throw new Error("Failed to fetch transcript: " + error.message);
