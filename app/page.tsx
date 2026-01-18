@@ -2,17 +2,14 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import {
-  Link as LinkIcon,
-  FileText,
-  Scaling,
-  Cpu,
-  ArrowRight,
   Check,
   Zap,
-  Sparkles,
 } from "lucide-react";
 import { HeroSection } from "@/components/landing/hero-section";
 import { FeaturesSection } from "@/components/landing/features-section";
+import { InteractiveDemo } from "@/components/landing/interactive-demo";
+import { SocialProof } from "@/components/landing/social-proof";
+import { Testimonials } from "@/components/landing/testimonials";
 
 export default async function Home() {
   const { userId } = await auth();
@@ -58,6 +55,12 @@ export default async function Home() {
       {/* Features Section */}
       <FeaturesSection />
 
+      {/* Interactive Demo Section */}
+      <InteractiveDemo />
+
+      {/* Social Proof Section */}
+      <SocialProof />
+
       {/* How It Works Section */}
       <section className="border-t border-zinc-800">
         <div className="mx-auto max-w-6xl px-6 py-20">
@@ -98,6 +101,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <Testimonials />
 
       {/* Pricing Section */}
       <section className="border-t border-zinc-800 bg-zinc-950/50">
